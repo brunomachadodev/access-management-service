@@ -1,0 +1,258 @@
+openapi: 3.0.3
+info:
+  title: Access Management API
+  description: API for managing scopes and user-scope associations.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Scopes
+    description: Operations for managing scopes
+  - name: UserScopes
+    description: Represents association of a scope to a user
+
+paths:
+  /scopes:
+    get:
+      summary: List all scopes
+      tags: [Scopes]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of scopes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Scope'
+    post:
+      summary: Create a new scope
+      tags: [Scopes]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScopeCreate'
+      responses:
+        '201':
+          description: Scope created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scope'
+
+  /scopes/{id}:
+    get:
+      summary: Get a scope by ID
+      tags: [Scopes]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Scope found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scope'
+        '404':
+          description: Scope not found
+    put:
+      summary: Update an existing scope
+      tags: [Scopes]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScopeUpdate'
+      responses:
+        '200':
+          description: Scope updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScopeUpdated'
+        '404':
+          description: Scope not found
+
+  /users/{userId}/scopes:
+    get:
+      summary: List all scopes associated to a user
+      tags: [UserScopes]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: List of user scopes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserScope'
+    post:
+      summary: Associate a scope to a user
+      tags: [UserScopes]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - scopeId
+              properties:
+                scopeId:
+                  type: integer
+                  example: 5
+      responses:
+        '201':
+          description: User scope created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserScope'
+
+  /users/{userId}/scopes/{scopeId}:
+    delete:
+      summary: Remove a scope association from a user
+      tags: [UserScopes]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          schema:
+            type: integer
+          required: true
+        - in: path
+          name: scopeId
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: Scope removed from user
+        '404':
+          description: Association not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Scope:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          readOnly: true
+        service:
+          type: string
+          example: reporting
+        scope:
+          type: string
+          example: reports:read
+        uuid:
+          type: string
+          nullable: true
+          readOnly: true
+          example: '550e8400-e29b-41d4-a716-446655440000'
+
+    ScopeUpdated:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          readOnly: true
+        service:
+          type: string
+          example: analytics
+        scope:
+          type: string
+          example: dashboards:write
+        uuid:
+          type: string
+          nullable: true
+          readOnly: true
+          example: '550e8400-e29b-41d4-a716-446655440000'
+
+    ScopeCreate:
+      type: object
+      required: [service, scope]
+      properties:
+        service:
+          type: string
+          example: billing
+        scope:
+          type: string
+          example: invoices:approve
+
+    ScopeUpdate:
+      type: object
+      properties:
+        service:
+          type: string
+          example: analytics
+        scope:
+          type: string
+          example: dashboards:write
+
+    UserScope:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          example: 101
+        scope_id:
+          type: integer
+          example: 5
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-08-20T14:25:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2025-08-21T09:15:00Z'
